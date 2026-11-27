@@ -227,7 +227,7 @@ body.tshow #hint{visibility:hidden}
       <button class="btn n" id="bSample">예시 그림으로 해 보기</button>
     </div>
     
-    <small>처리는 이 컴퓨터 안에서만 이루어지고 서버로 보내지 않습니다.<br>made by 1min</small>
+    <small>처리는 이 컴퓨터 안에서만 이루어지고 서버로 보내지 않습니다.<br>made by 1min<br><span class="saemVer" style="color:#b0b8c1;font-size:12px"></span></small>
   </div>
   <canvas id="cv"></canvas>
 </div>
@@ -270,6 +270,7 @@ body.tshow #hint{visibility:hidden}
     <button class="ob" id="cmpHold" style="flex:1"><svg width="18" height="18"><use href="#i-eye"/></svg>누르는 동안 원본</button>
     <button class="ob pri" id="aClose" style="flex:none">완료</button>
   </div>
+  <button class="ob" id="aInv" aria-pressed="false" style="width:100%;margin-top:8px;flex:none">흑백 반전 (검정 ↔ 흰색)</button>
   <details id="adjDet"><summary>밝기·대비·선명도</summary>
     <p class="tip" style="margin:6px 0 2px"><b>대비·선명도</b>를 조금씩만 올려 보세요. 밝기를 올리면 옅은 선이 사라질 수 있어요.</p>
     <button class="ob" id="aSaveMy" style="margin:4px 0 6px">이 값을 ‘내 설정’으로 저장</button>
@@ -341,6 +342,7 @@ body.tshow #hint{visibility:hidden}
     <li>글자는 도구가 짐작해 바꾸지 않고, 직접 지정한 곳만 바뀝니다. 글자 찾기 결과는 틀릴 수 있습니다.</li>
     <li>단축키는 아래 <b>단축키 보기</b>에서 확인하세요.</li>
     <li>수업·학교 안에서 쓰는 용도로 만든 도구입니다. 상업적으로는 쓰지 말아 주세요.</li>
+    <li>버전: <span class="saemVer"></span></li>
   </ul>
   <details><summary>단축키 보기 (윈도우)</summary>
     <table class="keys">
@@ -511,6 +513,7 @@ function processImage(c,a){
     }
   }
   if(a.bin){const lv=a.lv;for(let p=0;p<d.length;p+=4){let v=(d[p]-lv)*16+128;v=v<0?0:v>255?255:v;d[p]=d[p+1]=d[p+2]=v}}
+  if(a.inv){for(let p=0;p<d.length;p+=4){d[p]=255-d[p];d[p+1]=255-d[p+1];d[p+2]=255-d[p+2]}}
   g.putImageData(id,0,0);
   return {canvas:o,img:id};
 }
@@ -538,9 +541,10 @@ function autoLevel(quiet){
   reprocess();
 }
 function loadMy(){try{const v=JSON.parse(localStorage.getItem('saem_my')||'null');if(v&&typeof v.bright==='number'){PRESETS.my=v;$('#cardMy').style.display=''}}catch(e){}}
-function applyPreset(k){if(k==='my'){if(!PRESETS.my)return;S.adj={...PRESETS.my};syncUI();commit();reprocess();return}if(k==='custom'){if(JSON.stringify(S.adj)===JSON.stringify(PRESETS.orig))S.adj={...PRESETS.print,contrast:15,sharp:40};$('#adjDet').open=true;syncUI();commit();reprocess();return}S.adj={...PRESETS[k]};syncUI();commit();reprocess()}
+function applyPreset(k){const keep=k!=='orig'&&S.adj.inv?{inv:true}:{};if(k==='my'){if(!PRESETS.my)return;S.adj={...PRESETS.my,...keep};syncUI();commit();reprocess();return}if(k==='custom'){if(JSON.stringify(S.adj)===JSON.stringify(PRESETS.orig))S.adj={...PRESETS.print,contrast:15,sharp:40,...keep};$('#adjDet').open=true;syncUI();commit();reprocess();return}S.adj={...PRESETS[k],...keep};syncUI();commit();reprocess()}
 $$('#presets .card').forEach(b=>b.onclick=()=>applyPreset(b.dataset.p));
 $('#aAuto').onclick=()=>autoLevel(false);
+$('#aInv').onclick=()=>{if(S.adj.inv)delete S.adj.inv;else S.adj.inv=true;markPreset();commit();reprocess()};
 [['aBright','bright'],['aContrast','contrast'],['aSharp','sharp'],['aBp','bp'],['aWp','wp'],['aLv','lv']].forEach(([id,k])=>{
   const el=$('#'+id);
   el.oninput=()=>{S.adj[k]=+el.value;const o=$('#o'+id.slice(1));if(o)o.value=el.value;schedule();markPreset()};
@@ -565,7 +569,7 @@ const hold=$('#cmpHold');
 hold.addEventListener('pointerdown',e=>{S.hold=true;render();e.preventDefault()});
 ['pointerup','pointerleave','pointercancel'].forEach(n=>hold.addEventListener(n,()=>{if(S.hold){S.hold=false;render()}}));
 $('#aClose').onclick=()=>{S.panel=null;S.fit=true;syncDock();render()};
-function markPreset(){const cur=JSON.stringify(S.adj),hit=['orig','print','line','my'].find(k=>PRESETS[k]&&JSON.stringify(PRESETS[k])===cur);$$('#presets .card').forEach(b=>b.classList.toggle('on',b.dataset.p==='custom'?!hit:b.dataset.p===hit))}
+function markPreset(){const noInv=o=>JSON.stringify({...o,inv:undefined}),cur=noInv(S.adj),hit=['orig','print','line','my'].find(k=>PRESETS[k]&&noInv(PRESETS[k])===cur);$('#aInv').classList.toggle('pri',!!S.adj.inv);$('#aInv').setAttribute('aria-pressed',!!S.adj.inv);$$('#presets .card').forEach(b=>b.classList.toggle('on',b.dataset.p==='custom'?!hit:b.dataset.p===hit))}
 
 /* ================= 항목(덮개·글자·도형·조각) ================= */
 const pxPerPt=()=>S.crop.w/(S.print.mm/25.4*72);
@@ -1769,6 +1773,11 @@ $('#bSample').onclick=()=>{const im=new Image();im.onload=()=>{const c=document.
 
 $('#bAiView').onclick=()=>{$('#mInfo').classList.remove('on');$('#aiTxt').value=AI_TEXT;openM('#mAi')};
 
+</script>
+<script>
+/* 버전 표시: 여기 한 곳만 고치면 첫 화면과 ⓘ 에 같이 바뀜 */
+const SAEM_VERSION="1.1", SAEM_DATE="2026-11-27";
+document.querySelectorAll(".saemVer").forEach(e=>e.textContent=SAEM_VERSION+" · "+SAEM_DATE);
 </script>
 </body>
 </html>
