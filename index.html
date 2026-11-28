@@ -227,7 +227,7 @@ body.tshow #hint{visibility:hidden}
       <button class="btn n" id="bSample">예시 그림으로 해 보기</button>
     </div>
     
-    <small>처리는 이 컴퓨터 안에서만 이루어지고 서버로 보내지 않습니다.<br>made by 1min<br><span class="saemVer" style="color:#b0b8c1;font-size:12px"></span></small>
+    <small>처리는 이 컴퓨터 안에서만 이루어지고 서버로 보내지 않습니다.<br>made by 1min<br><span class="saemVer" style="color:#b0b8c1;font-size:12px"></span><span class="saemDl" hidden><br><a href="" style="color:inherit;font-weight:700;text-decoration:underline">HTML 파일 내려받기</a><br>받은 파일은 두 번 클릭하면 PC 브라우저에서 열립니다</span></small>
   </div>
   <canvas id="cv"></canvas>
 </div>
@@ -342,7 +342,7 @@ body.tshow #hint{visibility:hidden}
     <li>글자는 도구가 짐작해 바꾸지 않고, 직접 지정한 곳만 바뀝니다. 글자 찾기 결과는 틀릴 수 있습니다.</li>
     <li>단축키는 아래 <b>단축키 보기</b>에서 확인하세요.</li>
     <li>수업·학교 안에서 쓰는 용도로 만든 도구입니다. 상업적으로는 쓰지 말아 주세요.</li>
-    <li>버전: <span class="saemVer"></span></li>
+    <li>버전: <span class="saemVer"></span><span class="saemDl" hidden> · <a href="">HTML 파일 내려받기</a></span></li>
   </ul>
   <details><summary>단축키 보기 (윈도우)</summary>
     <table class="keys">
@@ -1776,8 +1776,10 @@ $('#bAiView').onclick=()=>{$('#mInfo').classList.remove('on');$('#aiTxt').value=
 </script>
 <script>
 /* 버전 표시: 여기 한 곳만 고치면 첫 화면과 ⓘ 에 같이 바뀜 */
-const SAEM_VERSION="1.1", SAEM_DATE="2026-11-27";
+const SAEM_VERSION="1.2", SAEM_DATE="2026-11-28";
 document.querySelectorAll(".saemVer").forEach(e=>e.textContent=SAEM_VERSION+" · "+SAEM_DATE);
+/* 내려받기 링크: 웹에서 열었을 때만 보임. 지금 페이지 파일을 그대로 저장 */
+if(/^https?:$/.test(location.protocol))document.querySelectorAll(".saemDl").forEach(e=>{e.hidden=false;const a=e.querySelector("a");a.setAttribute("download","샘그림_"+SAEM_VERSION+".html");a.addEventListener("click",ev=>ev.stopPropagation())});
 </script>
 </body>
 </html>
